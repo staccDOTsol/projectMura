@@ -202,10 +202,10 @@ for (let [price2, size2] of asks.getL2(1)) {
  side = trades[which] == 'BID' ? 'sell' : 'buy'
 
 var size = volumes[which] / 50
-size = 1
+//size = 1
 var price = prices[which]
 console.log([size, price])
-size = 1
+//size = 1
  
  let maxT = 5000
  let cacheDurationMs = maxT
