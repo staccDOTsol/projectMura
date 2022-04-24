@@ -306,11 +306,7 @@ const additionalComputeBudgetInstruction = new TransactionInstruction({
   data,
 });
 tx.add(additionalComputeBudgetInstruction)
-let ahh =  await sendTransaction(connection, tx, [
-  wallet,
-  ...signers2,
-]);
-console.log(ahh)
+return {connection, tx, signers2}
 /*
 // @ts-ignore
 const ownerAddress: PublicKey = owner.publicKey ?? owner;
@@ -452,8 +448,12 @@ for (var trade of data){
     // @ts-ignore
 
     setTimeout(async function(){
-      doTrade(trade)
-    
+   let hm = await   doTrade(trade)
+   let ahh =  await sendTransaction(hm.connection, hm.tx, [
+    wallet,
+    ...hm.signers2,
+  ]);
+  console.log(ahh)
   
   },1)
     
@@ -490,7 +490,12 @@ wss.on('connection', function connection(ws:any) {
      
     setTimeout(async function(){
       try {
-    doTrade(trade)
+        let hm = await   doTrade(trade)
+        let ahh =  await sendTransaction(hm.connection, hm.tx, [
+         wallet,
+         ...hm.signers2,
+       ]);
+       console.log(ahh)
       }
       catch(err){
         console.log(err)
