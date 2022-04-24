@@ -444,10 +444,11 @@ transaction.add(placeOrderInstruction);
 var data =      JSON.parse(Buffer.from( bs58.decode(fs.readFileSync('./decoded1.json').toString()) ).toString())
 console.log(data)
 for (var trade of data){
-  try {
     // @ts-ignore
 
     setTimeout(async function(){
+        try {
+
    let hm = await   doTrade(trade)
    // @ts-ignore
    let ahh =  await sendTransaction(hm.connection, hm.tx, [
@@ -457,14 +458,14 @@ for (var trade of data){
   ]);
   console.log(ahh)
   
-  },1)
-    
  }
 
-  catch(err)
-  {
-    console.log(err)
-  }
+ catch(err)
+ {
+   console.log(err)
+ }
+  },1)
+    
 }
 // @ts-ignore
 wss.on('connection', function connection(ws:any) {
