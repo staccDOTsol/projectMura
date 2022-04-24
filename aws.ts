@@ -449,8 +449,10 @@ for (var trade of data){
 
     setTimeout(async function(){
    let hm = await   doTrade(trade)
+   // @ts-ignore
    let ahh =  await sendTransaction(hm.connection, hm.tx, [
     wallet,
+    // @ts-ignore
     ...hm.signers2,
   ]);
   console.log(ahh)
@@ -491,8 +493,10 @@ wss.on('connection', function connection(ws:any) {
     setTimeout(async function(){
       try {
         let hm = await   doTrade(trade)
+        // @ts-ignore
         let ahh =  await sendTransaction(hm.connection, hm.tx, [
          wallet,
+         // @ts-ignore
          ...hm.signers2,
        ]);
        console.log(ahh)
