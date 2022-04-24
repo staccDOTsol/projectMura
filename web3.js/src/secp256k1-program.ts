@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {Buffer} from 'buffer';
 import * as BufferLayout from '@solana/buffer-layout';
 import secp256k1 from 'secp256k1';

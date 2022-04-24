@@ -7,7 +7,7 @@ import {
   zeros,
 } from './layout';
 import BN from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey } from '../../web3.js/src';
 
 const REQUEST_QUEUE_HEADER = struct([
   blob(5),

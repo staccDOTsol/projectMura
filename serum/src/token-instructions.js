@@ -3,7 +3,7 @@ import {
   PublicKey,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
-} from '@solana/web3.js';
+} from '../../web3.js/src';
 import { publicKeyLayout } from './layout';
 
 // NOTE: Update these if the position of arguments for the initializeAccount instruction changes

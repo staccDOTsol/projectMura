@@ -1,3 +1,4 @@
+// @ts-nocheck
 import nacl from 'tweetnacl';
 import type {SignKeyPair as KeyPair} from 'tweetnacl';
 import type {Buffer} from 'buffer';

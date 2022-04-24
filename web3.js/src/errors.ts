@@ -1,3 +1,4 @@
+// @ts-nocheck
 export class SendTransactionError extends Error {
   logs: string[] | undefined;
 

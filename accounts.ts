@@ -5,7 +5,7 @@ import {
   PublicKey,
   SystemProgram,
   AccountInfo,
-} from '@solana/web3.js';
+} from './web3.js/src';
 import {
   CANDY_MACHINE,
   CANDY_MACHINE_PROGRAM_ID,

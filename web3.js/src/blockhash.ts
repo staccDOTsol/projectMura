@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Blockhash as Base58 string.
  */

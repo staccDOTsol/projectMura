@@ -5,7 +5,7 @@ import {
   PublicKey,
   Connection,
   Keypair,
-} from '@solana/web3.js';
+} from './web3.js/src';
 import fs from 'fs';
 import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';

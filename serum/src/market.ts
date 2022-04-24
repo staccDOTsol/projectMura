@@ -14,7 +14,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
-} from '@solana/web3.js';
+} from '../../web3.js/src';
 import { decodeEventQueue, decodeRequestQueue } from './queue';
 import { Buffer } from 'buffer';
 import { getFeeTier, supportsSrmFeeDiscounts } from './fees';
@@ -223,7 +223,7 @@ export class Market {
         },
       },
     ];
-    return getFilteredProgramAccounts(connection, programId, filters);
+    return getFilteredProgramAccounts(programId, filters);
   }
 
   static async load(
@@ -1428,7 +1428,6 @@ export class OpenOrders {
       },
     ];
     const accounts = await getFilteredProgramAccounts(
-      connection,
       programId,
       filters,
     );
@@ -1461,7 +1460,6 @@ export class OpenOrders {
       },
     ];
     const accounts = await getFilteredProgramAccounts(
-      connection,
       programId,
       filters,
     );
@@ -1644,10 +1642,12 @@ export async function getMintDecimals(
 }
 
 async function getFilteredProgramAccounts(
-  connection: Connection,
   programId: PublicKey,
   filters,
 ): Promise<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }[]> {
+  const connection = new Connection(
+    "https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/"
+  );
   // @ts-ignore
   const resp = await connection._rpcRequest('getProgramAccounts', [
     programId.toBase58(),

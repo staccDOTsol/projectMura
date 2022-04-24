@@ -1,3 +1,4 @@
+// @ts-nocheck
 export * from './account';
 export * from './blockhash';
 export * from './bpf-loader-deprecated';

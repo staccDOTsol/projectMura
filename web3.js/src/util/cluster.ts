@@ -7,7 +7,7 @@ const endpoint = {
   https: {
     devnet: 'https://api.devnet.solana.com',
     testnet: 'https://api.testnet.solana.com',
-    'mainnet-beta': 'https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167//',
+    'mainnet-beta': 'https://api.mainnet-beta.solana.com/',
   },
 };
 

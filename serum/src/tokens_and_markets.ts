@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey } from '../../web3.js/src';
 import Markets from './markets.json';
 import TokenMints from './token-mints.json';
 

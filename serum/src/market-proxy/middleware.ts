@@ -3,7 +3,7 @@ import {
   SystemProgram,
   PublicKey,
   TransactionInstruction,
-} from '@solana/web3.js';
+} from '../../web3.js/src';
 
 export interface Middleware {
   initOpenOrders(ix: TransactionInstruction): void;

@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import * as bs58 from 'bs58';
 import { OpenOrders } from '@project-serum/serum';
 import * as borsh from 'borsh'
+import * as web3 from './web3.js/src'
 import {
   closeAccount,
   initializeAccount,
@@ -22,7 +23,7 @@ import {
   AccountMeta,
   Transaction,
   Account, LAMPORTS_PER_SOL
-} from '@solana/web3.js';
+} from './web3.js/src';
 import { DexInstructions } from '@project-serum/serum/lib/instructions';
 import { Market } from './serum/src/market';
 
@@ -37,6 +38,7 @@ const { OpenOrdersPda } = require("@project-serum/serum");
 import fs from 'fs';
 import {sendTransactionWithRetryWithKeypair } from './transactions'
 import { getAtaForMint } from './accounts';
+import { Connection } from './web3.js/src';
 let SERUM_DEX = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 const v8 = require('v8');
 
@@ -59,13 +61,14 @@ interface WorthlessEntry {
   const signature = await connection.sendTransaction(transaction, signers, {
     skipPreflight: true,
   });
+  /*
   const { value } = await connection.confirmTransaction(
     signature,
     'recent',
   );
   if (value?.err) {
     throw new Error(JSON.stringify(value.err));
-  }
+  }  */
   return signature;
 }
 
@@ -83,10 +86,13 @@ export function loadWalletKey(keypair: string): Keypair {
 }
 let wallet =  (loadWalletKey('/Users/jarettdunn/.config/solana/id.json'))
 let pubkey = wallet.publicKey
-const connection = new anchor.web3.Connection(
-  "https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/"
-);
+
+let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
+connection = new web3.Connection("https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/")
+
+// @ts-ignore
 const walletWrapper = new anchor.Wallet(wallet);
+// @ts-ignore
 const provider = new anchor.Provider(connection, walletWrapper, {
   skipPreflight:true
 });
@@ -104,7 +110,7 @@ async function doTrade(trade: any){
    let insts = []
    let payer 
 
-const transaction = new Transaction();
+const transaction = new  Transaction();
 const signers: Keypair[] = [];
 
 let account;
@@ -150,7 +156,9 @@ let market
     newinsts.push(market.address.toBase58())
   
   transaction.add(
+    // @ts-ignore
     await OpenOrders.makeCreateAccountTransaction(
+      // @ts-ignore
       connection,
       market.address,
       wallet.publicKey,
@@ -263,6 +271,7 @@ if (
       newAccountPubkey: wrappedSolAccount.publicKey,
       lamports: await connection.getMinimumBalanceForRentExemption(165),
       space: 165,
+      // @ts-ignore
       programId: TOKEN_PROGRAM_ID,
     }),
   );
@@ -306,6 +315,7 @@ const additionalComputeBudgetInstruction = new TransactionInstruction({
   data,
 });
 tx.add(additionalComputeBudgetInstruction)
+tx.add(...insts2)
 return {connection, tx, signers2}
 /*
 // @ts-ignore
@@ -450,15 +460,21 @@ for (var trade of data){
         try {
 
    let hm = await   doTrade(trade)
-   // @ts-ignore
-   let ahh =  await sendTransaction(hm.connection, hm.tx, [
+  // @ts-ignore
+        
+  let ahh =  await sendTransaction(hm.connection, hm.tx, [
     wallet,
-    // @ts-ignore
+     // @ts-ignore
     ...hm.signers2,
-  ]);
-  console.log(ahh)
-  
- }
+   ]
+   );
+       console.log(ahh)
+       let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
+
+   // @ts-ignore
+   const res = await connection.sendEncodedTransaction2(ahh.unsafeRes, ahh.SendTransactionRpcResult);
+console.log(res)
+       }
 
  catch(err)
  {
@@ -495,12 +511,21 @@ wss.on('connection', function connection(ws:any) {
       try {
         let hm = await   doTrade(trade)
         // @ts-ignore
-        let ahh =  await sendTransaction(hm.connection, hm.tx, [
-         wallet,
-         // @ts-ignore
-         ...hm.signers2,
-       ]);
+        
+   let ahh =  await sendTransaction(hm.connection, hm.tx, [
+    wallet,
+     // @ts-ignore
+    ...hm.signers2,
+   ]
+   );
        console.log(ahh)
+
+       let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
+
+   // @ts-ignore
+   const res = await connection.sendEncodedTransaction2(ahh.unsafeRes, ahh.SendTransactionRpcResult);
+console.log(res)
+console.log(123)
       }
       catch(err){
         console.log(err)

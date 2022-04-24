@@ -1,3 +1,4 @@
+// @ts-nocheck
 // TODO: These constants should be removed in favor of reading them out of a
 // Syscall account
 

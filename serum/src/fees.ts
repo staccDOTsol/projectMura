@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey } from '../../web3.js/src';
 import { getLayoutVersion } from './tokens_and_markets';
 
 export function supportsSrmFeeDiscounts(programId: PublicKey) {

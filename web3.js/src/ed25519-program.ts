@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {Buffer} from 'buffer';
 import * as BufferLayout from '@solana/buffer-layout';
 import nacl from 'tweetnacl';

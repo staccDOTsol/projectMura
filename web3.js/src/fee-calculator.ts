@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as BufferLayout from '@solana/buffer-layout';
 
 /**

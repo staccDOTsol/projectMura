@@ -1,3 +1,4 @@
+// @ts-nocheck
 import bs58 from 'bs58';
 import {Buffer} from 'buffer';
 import crossFetch from 'cross-fetch';
@@ -2776,11 +2777,14 @@ export class Connection {
     commitment?: Commitment,
   ): Promise<RpcResponseAndContext<SignatureResult>> {
     let decodedSignature;
+    signature = signature.result //: signature = signature.unsafe
+    if (signature){
+    console.log(signature)
+    let response: RpcResponseAndContext<SignatureResult> | null = null;
+
     try {
       decodedSignature = bs58.decode(signature);
-    } catch (err) {
-      throw new Error('signature must be base58 encoded: ' + signature);
-    }
+   
 
     assert(decodedSignature.length === 64, 'signature has invalid length');
 
@@ -2788,7 +2792,6 @@ export class Connection {
     const subscriptionCommitment = commitment || this.commitment;
 
     let subscriptionId;
-    let response: RpcResponseAndContext<SignatureResult> | null = null;
     const confirmPromise = new Promise((resolve, reject) => {
       try {
         subscriptionId = this.onSignature(
@@ -2840,8 +2843,16 @@ export class Connection {
         )} seconds. It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools.`,
       );
     }
-
+  } catch (err) {
+    console.log(err)
+    //  throw new Error('signature must be base58 encoded: ' + signature);
+    }
+    
     return response;
+  } 
+  else {
+    return null
+  }
   }
 
   /**
@@ -3797,7 +3808,7 @@ export class Connection {
    * Request an allocation of lamports to the specified address
    *
    * ```typescript
-   * import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+   * import { Connection, PublicKey, LAMPORTS_PER_SOL } from "../../web3.js/src";
    *
    * (async () => {
    *   const connection = new Connection("https://api.testnet.solana.com", "confirmed");
@@ -4041,9 +4052,9 @@ export class Connection {
   async sendEncodedTransaction(
     encodedTransaction: string,
     options?: SendOptions,
-  ): Promise<TransactionSignature> {
+  ): Promise<any> {
     const config: any = {encoding: 'base64'};
-    const skipPreflight = options && options.skipPreflight;
+    const skipPreflight = true// options && options.skipPreflight;
     const preflightCommitment =
       (options && options.preflightCommitment) || this.commitment;
 
@@ -4059,18 +4070,26 @@ export class Connection {
 
     const args = [encodedTransaction, config];
     const unsafeRes = await this._rpcRequest('sendTransaction', args);
-    const res = create(unsafeRes, SendTransactionRpcResult);
-    if ('error' in res) {
-      let logs;
-      if ('data' in res.error) {
-        logs = res.error.data.logs;
+    //console.log(unsafeRes)
+    return {unsafeRes, SendTransactionRpcResult};
+  }
+
+  async sendEncodedTransaction2(
+    unsafeRes, SendTransactionRpcResult
+  ): Promise<any> {
+  
+     const res = create(unsafeRes, SendTransactionRpcResult);
+      if ('error' in res) {
+        let logs;
+        if ('data' in res.error) {
+          logs = res.error.data.logs;
+        }
+      //  throw new SendTransactionError(
+         console.log( 'ignoring ;) failed to send transaction: ' + res.error.message + 
+          logs )
+        //);
       }
-      throw new SendTransactionError(
-        'failed to send transaction: ' + res.error.message,
-        logs,
-      );
-    }
-    return res.result;
+      return res
   }
 
   /**

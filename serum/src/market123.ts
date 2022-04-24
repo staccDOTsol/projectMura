@@ -14,7 +14,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
-} from '@solana/web3.js';
+} from '../../web3.js/src';
 import { decodeEventQueue, decodeRequestQueue } from './queue';
 import { Buffer } from 'buffer';
 import { getFeeTier, supportsSrmFeeDiscounts } from './fees';
