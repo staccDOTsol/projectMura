@@ -26,7 +26,7 @@ REQUEST_FLAGS.addBoolean('newOrder');
 REQUEST_FLAGS.addBoolean('cancelOrder');
 REQUEST_FLAGS.addBoolean('bid');
 REQUEST_FLAGS.addBoolean('postOnly');
-REQUEST_FLAGS.addBoolean('limit');
+REQUEST_FLAGS.addBoolean('ioc');
 
 const REQUEST = struct([
   REQUEST_FLAGS,

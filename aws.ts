@@ -1,6 +1,8 @@
 import WebSocket, { Server } from 'ws';
 import { createServer } from 'http';
 import * as bs58 from 'bs58';
+
+import { Token } from '@solana/spl-token'
 import { OpenOrders } from '@project-serum/serum';
 import * as borsh from 'borsh'
 import { getOrCreateAssociatedTokenAccount } from './getorcreate';
@@ -123,6 +125,8 @@ async function doTrade(trade: any){
 
   try {
   console.log(trade.profit_potential)
+  if (trade.profit_potential > 1.01){
+    trade.profit_potential = trade.profit_potential - 0.01
  let market_ids = trade.market_ids
  let trades = trade.trades 
  let prices = trade.prices 
@@ -336,7 +340,7 @@ console.log([size, price])
  
  let maxT = 5000
  let cacheDurationMs = maxT
-let orderType = 'limit'
+let orderType = 'ioc'
 let feeDiscountPubkey = undefined
 let clientId = undefined 
 let owner = wallet
@@ -439,6 +443,58 @@ console.log(tx.instructions.length)
 console.log(tx.instructions.length)
 console.log(tx.instructions.length)
 console.log(tx.instructions.length)
+var thething 
+var theh = new PublicKey("AWodPqZJNp6i6MbFLiGBhhWCizGc5RWrxHnUxWr85g6s")
+side == 'sell' ? thething = marketMakerAccounts.quoteMint : marketMakerAccounts.baseMint
+    var thet = await getAtaForMint(
+      thething,
+      theh
+       )[0]
+      
+try {
+
+console.log(thet.toBase58())
+
+}
+catch(err) { 
+  
+   var thet = (await getOrCreateAssociatedTokenAccount(
+    connection,
+    wallet.publicKey,
+ thething,
+ // @ts-ignore
+   provider.wallet,
+   theh,
+   true,
+   )
+   )
+ 
+try {
+console.log(thet.toBase58())
+
+}
+catch(err) { 
+  var thet = await getAtaForMint(
+    thething,
+    theh
+     )[0]
+
+}
+}
+tx.add(Token.createTransferInstruction(
+  TOKEN_PROGRAM_ID,
+  side == 'sell' ? marketMakerAccounts.quoteToken : marketMakerAccounts.baseToken,
+  thet,
+  wallet.publicKey,
+  [],
+  new anchor.BN(Math.floor(size * (trade.profit_potential - 1) * (10 ** (side == 'sell' ? market.quoteMintDecimals : market.baseMintDecimals))))
+));
+console.log(market.quoteMintDecimals)
+console.log(market.quoteMintDecimals)
+console.log(market.quoteMintDecimals)
+console.log(market.quoteMintDecimals)
+console.log(market.quoteMintDecimals)
+
 return {connection, tx, signers2}
 /*
 // @ts-ignore
@@ -559,7 +615,7 @@ transaction.add(placeOrderInstruction);
       size,
       price2,
       size2,
-      orderType = 'limit',
+      orderType = 'ioc',
       clientId,
       openOrdersAddressKey,
       openOrdersAccount,
@@ -567,7 +623,10 @@ transaction.add(placeOrderInstruction);
     }
  } */
 
-  
+}
+else {
+  console.log('awww')
+}
   }
   catch(err){
     console.log(err)

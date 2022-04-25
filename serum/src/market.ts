@@ -426,7 +426,7 @@ export class Market {
       stuff,
       owner,
       payer,
-      orderType = 'limit',
+      orderType = 'ioc',
       clientId,
       openOrdersAddressKey,
       // @ts-ignore
@@ -594,7 +594,7 @@ export class Market {
       stuff,
       owner,
       payer,
-      orderType = 'limit',
+      orderType = 'ioc',
       clientId,
       openOrdersAddressKey,
       openOrdersAccount,
@@ -680,7 +680,7 @@ export class Market {
       side:thing.side,
       price:thing.price,
       size:thing.size,
-      orderType: 'limit',
+      orderType: 'ioc',
       clientId,
       openOrdersAddressKey: openOrdersAddress,
       feeDiscountPubkey: useFeeDiscountPubkey,
@@ -717,7 +717,7 @@ export class Market {
       price,
       // @ts-ignore
       size,
-      orderType = 'limit',
+      orderType = 'ioc',
       clientId,
       openOrdersAddressKey,
       openOrdersAccount,
@@ -768,7 +768,7 @@ export class Market {
       price,
       // @ts-ignore
       size,
-      orderType = 'limit',
+      orderType = 'ioc',
       clientId,
       openOrdersAddressKey,
       openOrdersAccount,
@@ -1287,7 +1287,7 @@ export interface OrderParams<T = Account> {
     price,
     size,
     }];
-  orderType?: 'limit' | 'limit' | 'postOnly';
+  orderType?: 'ioc' | 'ioc' | 'postOnly';
   clientId?: BN;
   openOrdersAddressKey?: PublicKey;
   openOrdersAccount?: Keypair;

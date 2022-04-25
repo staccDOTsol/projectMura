@@ -55,8 +55,8 @@ INSTRUCTION_LAYOUT.inner.addVariant(
   ]),
   'newOrder',
 );
-INSTRUCTION_LAYOUT.inner.addVariant(2, struct([u16('limit')]), 'matchOrders');
-INSTRUCTION_LAYOUT.inner.addVariant(3, struct([u16('limit')]), 'consumeEvents');
+INSTRUCTION_LAYOUT.inner.addVariant(2, struct([u16('ioc')]), 'matchOrders');
+INSTRUCTION_LAYOUT.inner.addVariant(3, struct([u16('ioc')]), 'consumeEvents');
 INSTRUCTION_LAYOUT.inner.addVariant(
   4,
   struct([
@@ -83,7 +83,7 @@ INSTRUCTION_LAYOUT.inner.addVariant(
     selfTradeBehaviorLayout('selfTradeBehavior'),
     orderTypeLayout('orderType'),
     u64('clientId'),
-    u16('limit'),
+    u16('ioc'),
   ]),
   'newOrderV3',
 );
@@ -99,8 +99,8 @@ INSTRUCTION_LAYOUT.inner.addVariant(
 );
 INSTRUCTION_LAYOUT.inner.addVariant(14, struct([]), 'closeOpenOrders');
 INSTRUCTION_LAYOUT.inner.addVariant(15, struct([]), 'initOpenOrders');
-INSTRUCTION_LAYOUT.inner.addVariant(16, struct([u16('limit')]), 'prune');
-INSTRUCTION_LAYOUT.inner.addVariant(17, struct([u16('limit')]), 'consumeEventsPermissioned');
+INSTRUCTION_LAYOUT.inner.addVariant(16, struct([u16('ioc')]), 'prune');
+INSTRUCTION_LAYOUT.inner.addVariant(17, struct([u16('ioc')]), 'consumeEventsPermissioned');
 INSTRUCTION_LAYOUT.inner.addVariant(
   18,
   struct([
@@ -130,7 +130,7 @@ INSTRUCTION_LAYOUT_V2.inner.addVariant(
     selfTradeBehaviorLayout('selfTradeBehavior'),
     orderTypeLayout('orderType'),
     u64('clientId'),
-    u16('limit'),
+    u16('ioc'),
     i64('maxTs'),
   ]),
   'newOrderV3',

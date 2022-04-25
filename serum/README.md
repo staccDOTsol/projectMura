@@ -56,7 +56,7 @@ await market.placeOrder(connection, {
   side: 'buy', // 'buy' or 'sell'
   price: 123.45,
   size: 17.0,
-  orderType: 'limit', // 'limit', 'limit', 'postOnly'
+  orderType: 'ioc', // 'ioc', 'ioc', 'postOnly'
 });
 
 // Retrieving open orders by owner
