@@ -5,7 +5,7 @@ const {
   PublicKey,
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
-} = require("./web3.js/src");
+} = require("@solana/web3.js");
 const {
   OpenOrders,
   OpenOrdersPda,

@@ -3,7 +3,8 @@ import { createServer } from 'http';
 import * as bs58 from 'bs58';
 import { OpenOrders } from '@project-serum/serum';
 import * as borsh from 'borsh'
-import * as web3 from './web3.js/src'
+import { getOrCreateAssociatedTokenAccount } from './getorcreate';
+import * as web3 from '@solana/web3.js'
 import {
   closeAccount,
   initializeAccount,
@@ -23,10 +24,10 @@ import {
   AccountMeta,
   Transaction,
   Account, LAMPORTS_PER_SOL
-} from './web3.js/src';
+} from '@solana/web3.js';
 import { DexInstructions } from '@project-serum/serum/lib/instructions';
 import { Market } from './serum/src/market';
-
+const poordev = true
 const marketMaker = require("./market-maker");
 
 const marketProxy = require("./market-proxy");
@@ -38,7 +39,9 @@ const { OpenOrdersPda } = require("@project-serum/serum");
 import fs from 'fs';
 import {sendTransactionWithRetryWithKeypair } from './transactions'
 import { getAtaForMint } from './accounts';
-import { Connection } from './web3.js/src';
+import { Connection } from '@solana/web3.js';
+import { Key } from '@metaplex-foundation/mpl-token-metadata';
+import { ErrorCode } from '@strata-foundation/spl-token-collective';
 let SERUM_DEX = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 const v8 = require('v8');
 
@@ -56,11 +59,24 @@ interface WorthlessEntry {
  async function sendTransaction(
   connection: any,
   transaction: Transaction,
-  signers: Array<Account>,
+  signers: Array<Keypair>,
 ): Promise<any> {
-  const signature = await connection.sendTransaction(transaction, signers, {
-    skipPreflight: true,
-  });
+  let ns: Keypair[] = []
+  for (var signer of signers){
+if (signer.publicKey){
+  
+    console.log(signer.publicKey.toBase58())
+ // @ts-ignore
+    ns.push(signer)
+}
+  }
+  transaction.feePayer = wallet.publicKey
+  transaction.recentBlockhash = (
+    await connection.getLatestBlockhash('confirmed')
+  ).blockhash;
+  try {
+    const signature = await provider.send(transaction, ns)
+  
   /*
   const { value } = await connection.confirmTransaction(
     signature,
@@ -69,7 +85,12 @@ interface WorthlessEntry {
   if (value?.err) {
     throw new Error(JSON.stringify(value.err));
   }  */
+
   return signature;
+
+}catch(err){
+  return err
+}
 }
 
 const server = createServer();
@@ -87,14 +108,14 @@ export function loadWalletKey(keypair: string): Keypair {
 let wallet =  (loadWalletKey('/Users/jarettdunn/.config/solana/id.json'))
 let pubkey = wallet.publicKey
 
-let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
-connection = new web3.Connection("https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/")
+//let connection = new web3.Connection("https://solana-api.projectserum.com")//https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")/
+let connection = new web3.Connection("https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/")
 
 // @ts-ignore
 const walletWrapper = new anchor.Wallet(wallet);
 // @ts-ignore
 const provider = new anchor.Provider(connection, walletWrapper, {
-  skipPreflight:true
+  skipPreflight: true
 });
 
 
@@ -122,7 +143,7 @@ let openOrdersAddress = account.publicKey;
 let newinsts = []
 
 transaction.recentBlockhash = (
-  await connection.getRecentBlockhash('recent')
+  await connection.getLatestBlockhash('recent')
 ).blockhash;
 let insts2: any = []
 
@@ -132,44 +153,142 @@ let signers2: any = []
 let  marketMakerAccounts
 let side
 let market
+let openOrdersAccounts
+let openOrders
   for (var which in market_ids){
     try{
     if (true){//parseInt(which) <= 1){
-   market = await Market.load(connection, new PublicKey(market_ids[which]), {skipPreflight:true,commitment:'recent'}, SERUM_DEX);
- 
+   market = await Market.load(connection, new PublicKey(market_ids[which]), {skipPreflight: true,commitment:'recent'}, SERUM_DEX);
+   const ownerAddress: PublicKey = wallet.publicKey
+    openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
+     connection,
+     ownerAddress,
+     0,
+   );
+   console.log(openOrdersAccounts.length)
+    try{
+
+   openOrdersAddress = openOrdersAccounts[0].address
+   openOrders = openOrdersAccounts[0]
+    account = await connection.getAccountInfo( openOrdersAddress)//, 'recent', SERUM_DEX)
+    }
+    catch(err){
+
+      console.log(err)
+      
+     let account;
+   
+     const tx: Transaction = new Transaction();
+    
+       account = new Keypair();
+     tx.add(
+       await OpenOrders.makeCreateAccountTransaction(
+         connection,
+         market.address,
+         ownerAddress,
+         account.publicKey,
+         market._programId,  
+       ),
+     );
+     openOrdersAddress = account.publicKey;
+   //  signers.push(account);
+     const signature = await connection.sendTransaction(tx, [wallet, account], {
+       skipPreflight: true,
+       
+     });
+     await connection.confirmTransaction(signature,'single')
+     console.log(signature)
+     
+     console.log(signature)
+     console.log(signature)
+     console.log(signature)
+     console.log(signature)
+     console.log(signature)
+   
+     openOrdersAddress = account.publicKey
+     openOrders = account
+     // refresh the cache of open order accounts on next fetch
+    // market._openOrdersAccountsCache[ownerAddress.toBase58()].ts = 0;
+   } 
+   var bT =await getAtaForMint(
+    market.baseMintAddress,
+      wallet.publicKey
+      )[0]
+      var qT = await getAtaForMint(
+       market.quoteMintAddress,
+         wallet.publicKey
+         )[0]
+         
    marketMakerAccounts = {
     account: wallet,
     owner:wallet,
-    baseToken: (await getAtaForMint(market.baseMintAddress, wallet.publicKey))[0],//new PublicKey("So11111111111111111111111111111111111111112"),//fundedAccount.tokens[mintGodA.mint.toString()],
-    quoteToken: (await getAtaForMint(market.quoteMintAddress, wallet.publicKey))[0],//new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")//fundedAccount.tokens[mintGodB.mint.toString()],
+    baseToken: bT ,//new PublicKey("So11111111111111111111111111111111111111112"),//fundedAccount.tokens[mintGodA.mint.toString()],
+    quoteToken: qT ,//new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")//fundedAccount.tokens[mintGodB.mint.toString()],
   baseMint:market.baseMintAddress,
   quoteMint:market.quoteMintAddress
-  };
+   }
+try {
+
   console.log(marketMakerAccounts.baseToken.toBase58())
   console.log(marketMakerAccounts.quoteToken.toBase58())
   
+  }
+  catch(err) { 
+     var bT = (await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallet.publicKey,
+   market.baseMintAddress,
+   // @ts-ignore
+     provider.wallet,
+     wallet.publicKey,
+     true,
+     )
+     )
+     var qT = (await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallet.publicKey,
+   market.quoteMintAddress,
+   // @ts-ignore
+     provider.wallet,
+     wallet.publicKey,
+     true,
+     )
+     )
+   marketMakerAccounts = {
+    account: wallet,
+    owner:wallet,
+    baseToken: bT ,//new PublicKey("So11111111111111111111111111111111111111112"),//fundedAccount.tokens[mintGodA.mint.toString()],
+    quoteToken: qT ,//new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")//fundedAccount.tokens[mintGodB.mint.toString()],
+  baseMint:market.baseMintAddress,
+  quoteMint:market.quoteMintAddress
+  };
+  try {
+  console.log(marketMakerAccounts.baseToken.toBase58())
+  console.log(marketMakerAccounts.quoteToken.toBase58())
+  
+  }
+  catch(err) { 
+    var bT =await getAtaForMint(
+   market.baseMintAddress,
+     wallet.publicKey
+     )[0]
+     var qT = await getAtaForMint(
+      market.quoteMintAddress,
+        wallet.publicKey
+        )[0]
+   marketMakerAccounts = {
+    account: wallet,
+    owner:wallet,
+    baseToken: bT ,//new PublicKey("So11111111111111111111111111111111111111112"),//fundedAccount.tokens[mintGodA.mint.toString()],
+    quoteToken: qT ,//new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")//fundedAccount.tokens[mintGodB.mint.toString()],
+  baseMint:market.baseMintAddress,
+  quoteMint:market.quoteMintAddress
+  };
+  }
+}
   transaction.feePayer=marketMakerAccounts.baseToken
 // @ts-ignore
- if (!newinsts.includes(market.address.toBase58())){
 
-// @ts-ignore
-    newinsts.push(market.address.toBase58())
-  
-  transaction.add(
-    // @ts-ignore
-    await OpenOrders.makeCreateAccountTransaction(
-      // @ts-ignore
-      connection,
-      market.address,
-      wallet.publicKey,
-      account.publicKey,
-      market.programId,
-    ),
-  );
-  if (!signers.includes(account)){
-    signers.push(account);
-    }
-    }
   const marketProxyClient = await marketProxy.load(
     connection,
     new PublicKey("J2NhFnBxcwbxovE7avBQCXWPgfVtxi5sJfz68AH6R2Mg"),
@@ -209,7 +328,7 @@ for (let [price2, size2] of asks.getL2(1)) {
 */
  side = trades[which] == 'BID' ? 'sell' : 'buy'
 
-var size = volumes[which] / 50
+var size = volumes[which] /// 13.8 / 3
 //size = 1
 var price = prices[which]
 console.log([size, price])
@@ -226,7 +345,7 @@ let selfTradeBehavior = 'decrementTake'
 let ou = await market.placeOrder( connection, // @ts-ignore
 {stuff:[{side, price, size}],   owner, payer, orderType, openOrdersAddressKey,   bW: marketMakerAccounts.baseToken, qW:
 marketMakerAccounts.quoteToken })
-  console.log(ou)
+  console.log(ou.insts.length)
  tx.add(...ou.insts)
 for (var s of ou.signers){
   if (!signers2.includes(s)){
@@ -235,20 +354,14 @@ for (var s of ou.signers){
 }
     }
   }catch(err){
-    
+    console.log(err)
   }
 }
 console.log('....woot')
 let bW = marketMakerAccounts.baseToken
 let qW = marketMakerAccounts.quoteToken
+const ownerAddress: PublicKey = wallet.publicKey
 
-const ownerAddress: PublicKey = wallet.publicKey 
-const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
-  connection,
-  ownerAddress,
-  0,
-);
-// @ts-ignore
 const vaultSigner = await PublicKey.createProgramAddress(
   [
     market.address.toBuffer(),
@@ -256,7 +369,6 @@ const vaultSigner = await PublicKey.createProgramAddress(
   ],
   market._programId,
 );
-let openOrders = openOrdersAccounts[0]
 let wrappedSolAccount: Keypair | null = null;
 if (
   (market.baseMintAddress.equals(WRAPPED_SOL_MINT) &&
@@ -285,7 +397,7 @@ if (
   if (!signers2.includes(wrappedSolAccount ))
   signers2.push(wrappedSolAccount);
 }
-
+if (tx.instructions.length > 0){
 insts2.push(
   DexInstructions.settleFunds({
     market: market.address,
@@ -306,6 +418,7 @@ insts2.push(
     referrerQuoteWallet: null,
   }),
 );
+}
 const data = Buffer.from(
   Uint8Array.of(0, ...new anchor.BN(256000).toArray("le", 4))
 );
@@ -314,8 +427,18 @@ const additionalComputeBudgetInstruction = new TransactionInstruction({
   programId: new PublicKey("ComputeBudget111111111111111111111111111111"),
   data,
 });
-tx.add(additionalComputeBudgetInstruction)
+if (insts2.length > 0){
+  tx.add(additionalComputeBudgetInstruction)
 tx.add(...insts2)
+}
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
+console.log(tx.instructions.length)
 return {connection, tx, signers2}
 /*
 // @ts-ignore
@@ -453,13 +576,50 @@ transaction.add(placeOrderInstruction);
 //let data = [{"prices":[0.27851702250432776,3.482,0.29,0.8163265306122448,1.254],"market_ids":["HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1","HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1","HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1","8afKwzHR3wJE7W7Y5hvQkngXh6iTepSZuutRMMy96MjR","8afKwzHR3wJE7W7Y5hvQkngXh6iTepSZuutRMMy96MjR"],"tokens":["USDT","SUSHI","USDC","USDT","SXP","USDT"],"volumes":[10,10,10,842.2,5161.8],"profit_potential":1.0578279642742414,"trades":["BID","ASK","BID","ASK","ASK","BID"]}]//,{"prices":[0.8163265306122448,1.254,0.28851702250432776,3.582,0.9999000099990001],"market_ids":["8afKwzHR3wJE7W7Y5hvQkngXh6iTepSZuutRMMy96MjR","8afKwzHR3wJE7W7Y5hvQkngXh6iTepSZuutRMMy96MjR","6DgQRTpJTnAYBSShngAVZZDq7j9ogRN1GfSQ3cq9tubW","A1Q9iJDVVS8Wsswr9ajeZugmj64bQVCYLZQLra2TMBMo","77quYg4MGneUdjgXCunt9GgM1usmrxKY31twEy3WHwcS"],"tokens":["USDT","SXP","USDT","SUSHI","USDC","USDT"],"volumes":[842.2,5161.8,0.19,0.46,56740],"profit_potential":1.0578279642742412,"trades":["ASK","BID","ASK","BID","ASK"]}]
 var data =      JSON.parse(Buffer.from( bs58.decode(fs.readFileSync('./decoded1.json').toString()) ).toString())
 console.log(data)
-for (var trade of data){
+//for (var trade of data){
     // @ts-ignore
-
+    if (poordev){
+    for (var abc = 0; abc <= 1; abc++){
+      let min = 100000000000
+      let w = 0
+      let ww = 0
+      let div = 0
+for (var v of data[abc].volumes){
+if (v < min){
+min = v
+ww = w
+div = 1 / min
+}
+w++
+}
+let c = 0
+for (var v of data[abc].volumes){
+data[abc].volumes[c] = v * div
+c++
+}
+      }
+    }
+      console.log(data)
     setTimeout(async function(){
         try {
+         
+  let hm2 = await   doTrade(data[1])
+// @ts-ignore
+  let ahh2 =  await sendTransaction(hm2.connection, hm2.tx, [
+    wallet,
+     // @ts-ignore
+    ...hm2.signers2,
+   ]
+   );
+       console.log(ahh2)
+  }
+      catch(err){
+        console.log(err)
+      }         }, 1)
+      setTimeout(async function(){
 
-   let hm = await   doTrade(trade)
+      try {
+   let hm = await   doTrade(data[0])
   // @ts-ignore
         
   let ahh =  await sendTransaction(hm.connection, hm.tx, [
@@ -469,11 +629,8 @@ for (var trade of data){
    ]
    );
        console.log(ahh)
-       let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
+       //let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
 
-   // @ts-ignore
-   const res = await connection.sendEncodedTransaction2(ahh.unsafeRes, ahh.SendTransactionRpcResult);
-console.log(res)
        }
 
  catch(err)
@@ -482,7 +639,7 @@ console.log(res)
  }
   },1)
     
-}
+//}
 // @ts-ignore
 wss.on('connection', function connection(ws:any) {
   ws.on('message', function message(data: any) {
@@ -505,34 +662,69 @@ wss.on('connection', function connection(ws:any) {
      console.log(err)
    }
    console.log(data)
-   for (var trade of data){
-     
+   if (poordev){
+   for (var abc = 0; abc <= 1; abc++){
+    let min = 100000000000
+    let w = 0
+    let ww = 0
+    let div = 0
+for (var v of data[abc].volumes){
+if (v < min){
+min = v
+ww = w
+div = 1 / min
+}
+w++
+}
+let c = 0
+for (var v of data[abc].volumes){
+data[abc].volumes[c] = v * div
+c++
+}
+    }
+  }
+    console.log(data)
+  // for (var trade of data){
     setTimeout(async function(){
       try {
-        let hm = await   doTrade(trade)
-        // @ts-ignore
-        
-   let ahh =  await sendTransaction(hm.connection, hm.tx, [
-    wallet,
-     // @ts-ignore
-    ...hm.signers2,
-   ]
-   );
-       console.log(ahh)
 
-       let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
-
+        let hm2 = await   doTrade(data[1])
+// @ts-ignore
+let ahh2 = await  sendTransaction(hm2.connection, hm2.tx, [
+  wallet,
    // @ts-ignore
-   const res = await connection.sendEncodedTransaction2(ahh.unsafeRes, ahh.SendTransactionRpcResult);
-console.log(res)
-console.log(123)
-      }
-      catch(err){
-        console.log(err)
-      }
-  },1)
-   }
-fs.writeFileSync('./decoded.json', data)
+  ...hm2.signers2,
+ ]
+ );
+     console.log(ahh2)
+}
+    catch(err){
+      console.log(err)
+    }         }, 1)
+    setTimeout(async function(){
+
+    try {
+ let hm = await   doTrade(data[0])
+// @ts-ignore
+      
+let ahh =  await sendTransaction(hm.connection, hm.tx, [
+  wallet,
+   // @ts-ignore
+  ...hm.signers2,
+ ]
+ );
+     console.log(ahh)
+     //let connection = new web3.Connection("https://rpc.theindex.io/mainnet-beta/4ae962ec-5c8c-4071-9ef2-e5c6b59bdf3e")
+
+     }
+
+catch(err)
+{
+ console.log(err)
+}
+},1)
+ //  }
+//fs.writeFileSync('./decoded.json', data)
   });
 });
 // @ts-ignore

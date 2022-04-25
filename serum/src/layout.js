@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { bits, Blob, Layout, u32, UInt } from 'buffer-layout';
-import { PublicKey } from '../../web3.js/src';
+import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
 class Zeros extends Blob {

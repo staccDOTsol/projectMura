@@ -1,5 +1,5 @@
 const lib = require('./lib/index');
-const solana = require('../../web3.js/src');
+const solana = require('@solana/web3.js');
 const Market = lib.Market;
 const Orderbook = lib.Orderbook;
 const OpenOrders = lib.OpenOrders;

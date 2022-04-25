@@ -1,4 +1,4 @@
-import { PublicKey, clusterApiUrl } from './web3.js/src';
+import { PublicKey, clusterApiUrl } from '@solana/web3.js';
 export const CANDY_MACHINE = 'candy_machine';
 export const AUCTION_HOUSE = 'auction_house';
 export const TOKEN_ENTANGLER = 'token_entangler';

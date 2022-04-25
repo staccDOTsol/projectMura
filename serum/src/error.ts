@@ -1,4 +1,4 @@
-import { Transaction, SystemProgram } from '../../web3.js/src';
+import { Transaction, SystemProgram } from '@solana/web3.js';
 import { PROGRAM_LAYOUT_VERSIONS } from './tokens_and_markets';
 import { TOKEN_PROGRAM_ID } from './token-instructions';
 

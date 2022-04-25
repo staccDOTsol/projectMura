@@ -7,7 +7,7 @@ import {
   zeros,
 } from './layout';
 import BN from 'bn.js';
-import { PublicKey } from '../../web3.js/src';
+import { PublicKey } from '@solana/web3.js';
 
 const REQUEST_QUEUE_HEADER = struct([
   blob(5),
@@ -26,7 +26,7 @@ REQUEST_FLAGS.addBoolean('newOrder');
 REQUEST_FLAGS.addBoolean('cancelOrder');
 REQUEST_FLAGS.addBoolean('bid');
 REQUEST_FLAGS.addBoolean('postOnly');
-REQUEST_FLAGS.addBoolean('ioc');
+REQUEST_FLAGS.addBoolean('limit');
 
 const REQUEST = struct([
   REQUEST_FLAGS,

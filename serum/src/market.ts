@@ -14,7 +14,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
-} from '../../web3.js/src';
+} from '@solana/web3.js';
 import { decodeEventQueue, decodeRequestQueue } from './queue';
 import { Buffer } from 'buffer';
 import { getFeeTier, supportsSrmFeeDiscounts } from './fees';
@@ -223,7 +223,7 @@ export class Market {
         },
       },
     ];
-    return getFilteredProgramAccounts(programId, filters);
+    return getFilteredProgramAccounts(connection, programId, filters);
   }
 
   static async load(
@@ -423,9 +423,9 @@ export class Market {
     connection: Connection,
    
     {
+      stuff,
       owner,
       payer,
-      stuff,
       orderType = 'limit',
       clientId,
       openOrdersAddressKey,
@@ -441,9 +441,9 @@ export class Market {
     const { transaction: insts, signers } = await this.makePlaceOrderTransaction<
       Account
     >(connection, 
-      {owner,
+      {
+        stuff,owner,
       payer,
-      stuff,
       orderType,
       clientId,
       openOrdersAddressKey,
@@ -607,7 +607,7 @@ export class Market {
   ) {
     let first = true 
     const transaction: any = [];
-    const signers: Account[] = [];
+    const signers: Keypair[] = [];
 
     // @ts-ignore
     const ownerAddress: PublicKey = owner.publicKey ?? owner;
@@ -617,61 +617,29 @@ export class Market {
       cacheDurationMs,
     );
     let openOrdersAddress: PublicKey;
-    if (openOrdersAccounts.length === 0) {
-      let account;
-      if (openOrdersAccount) {
-        account = openOrdersAccount;
-      } else {
-        account = new Account();
-      }
-      transaction.push(
-        await OpenOrders.makeCreateAccountTransaction(
-          connection,
-          this.address,
-          ownerAddress,
-          account.publicKey,
-          this._programId,
-        ),
-      );
-      openOrdersAddress = account.publicKey;
-      signers.push(account);
-      // refresh the cache of open order accounts on next fetch
-      this._openOrdersAccountsCache[ownerAddress.toBase58()].ts = 0;
-    } else if (openOrdersAccount) {
+   
+    if (openOrdersAccount) {
       openOrdersAddress = openOrdersAccount.publicKey;
     } else if (openOrdersAddressKey) {
       openOrdersAddress = openOrdersAddressKey;
     } else {
       openOrdersAddress = openOrdersAccounts[0].address;
     }
+    console.log(stuff)
     for (var thing of stuff){
     // Fetch an SRM fee discount key if the market supports discounts and it is not supplied
-    let useFeeDiscountPubkey: PublicKey | null;
-    if (feeDiscountPubkey) {
-      useFeeDiscountPubkey = feeDiscountPubkey;
-    } else if (
-      feeDiscountPubkey === undefined &&
-      this.supportsSrmFeeDiscounts
-    ) {
-      useFeeDiscountPubkey = (
-        await this.findBestFeeDiscountKey(
-          connection,
-          ownerAddress,
-          feeDiscountPubkeyCacheDurationMs,
-        )
-      ).pubkey;
-    } else {
-      useFeeDiscountPubkey = null;
-    }
+    
+   let   useFeeDiscountPubkey = null;
+    
 
 
-    let wrappedSolAccount: Account | null = null;
+    let wrappedSolAccount: Keypair | null = null;
     if (payer.equals(ownerAddress)) {
       if (
         (thing.side === 'buy' && this.quoteMintAddress.equals(WRAPPED_SOL_MINT)) ||
         (thing.side === 'sell' && this.baseMintAddress.equals(WRAPPED_SOL_MINT))
       ) {
-        wrappedSolAccount = new Account();
+        wrappedSolAccount = new Keypair();
         let lamports;
         if (thing.side === 'buy') {
           lamports = Math.round(thing.price * thing.size * 1.01 * LAMPORTS_PER_SOL);
@@ -712,13 +680,14 @@ export class Market {
       side:thing.side,
       price:thing.price,
       size:thing.size,
-      orderType,
+      orderType: 'limit',
       clientId,
       openOrdersAddressKey: openOrdersAddress,
       feeDiscountPubkey: useFeeDiscountPubkey,
       selfTradeBehavior,
       maxTs,
     });
+    console.log(placeOrderInstruction)
     transaction.push(placeOrderInstruction);
   
     if (wrappedSolAccount && first) {
@@ -845,7 +814,7 @@ export class Market {
   private async _sendTransaction(
     connection: Connection,
     transaction: Transaction,
-    signers: Array<Account>,
+    signers: Array<Keypair>,
   ): Promise<TransactionSignature> {
     const signature = await connection.sendTransaction(transaction, signers, {
       skipPreflight: this._skipPreflight,
@@ -862,7 +831,7 @@ export class Market {
 
   async cancelOrderByClientId(
     connection: Connection,
-    owner: Account,
+    owner: Keypair,
     openOrders: PublicKey,
     clientId: BN,
   ) {
@@ -877,7 +846,7 @@ export class Market {
 
   async cancelOrdersByClientIds(
     connection: Connection,
-    owner: Account,
+    owner: Keypair,
     openOrders: PublicKey,
     clientIds: BN[],
   ) {
@@ -947,7 +916,7 @@ export class Market {
     return transaction;
   }
 
-  async cancelOrder(connection: Connection, owner: Account, order: Order) {
+  async cancelOrder(connection: Connection, owner: Keypair, order: Order) {
     const transaction = await this.makeCancelOrderTransaction(
       connection,
       owner.publicKey,
@@ -1078,16 +1047,16 @@ export class Market {
     );
 
     const transaction = new Transaction();
-    const signers: Account[] = [];
+    const signers: Keypair[] = [];
 
-    let wrappedSolAccount: Account | null = null;
+    let wrappedSolAccount: Keypair | null = null;
     if (
       (this.baseMintAddress.equals(WRAPPED_SOL_MINT) &&
         baseWallet.equals(openOrders.owner)) ||
       (this.quoteMintAddress.equals(WRAPPED_SOL_MINT) &&
         quoteWallet.equals(openOrders.owner))
     ) {
-      wrappedSolAccount = new Account();
+      wrappedSolAccount = new Keypair();
       transaction.add(
         SystemProgram.createAccount({
           fromPubkey: openOrders.owner,
@@ -1141,7 +1110,7 @@ export class Market {
     return { transaction, signers, payer: openOrders.owner };
   }
 
-  async matchOrders(connection: Connection, feePayer: Account, limit: number) {
+  async matchOrders(connection: Connection, feePayer: Keypair, limit: number) {
     const tx = this.makeMatchOrdersTransaction(limit);
     return await this._sendTransaction(connection, tx, [feePayer]);
   }
@@ -1318,10 +1287,10 @@ export interface OrderParams<T = Account> {
     price,
     size,
     }];
-  orderType?: 'limit' | 'ioc' | 'postOnly';
+  orderType?: 'limit' | 'limit' | 'postOnly';
   clientId?: BN;
   openOrdersAddressKey?: PublicKey;
-  openOrdersAccount?: Account;
+  openOrdersAccount?: Keypair;
   feeDiscountPubkey?: PublicKey | null;
   selfTradeBehavior?:
   | 'decrementTake'
@@ -1428,6 +1397,7 @@ export class OpenOrders {
       },
     ];
     const accounts = await getFilteredProgramAccounts(
+      connection,
       programId,
       filters,
     );
@@ -1460,6 +1430,7 @@ export class OpenOrders {
       },
     ];
     const accounts = await getFilteredProgramAccounts(
+      connection,
       programId,
       filters,
     );
@@ -1642,12 +1613,13 @@ export async function getMintDecimals(
 }
 
 async function getFilteredProgramAccounts(
+  connection: Connection,
   programId: PublicKey,
   filters,
 ): Promise<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }[]> {
-  const connection = new Connection(
-    "https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/"
-  );
+ //const connection = new Connection(
+ //   "https://dark-floral-field.solana-mainnet.quiknode.pro/a6ef9fd10f3f1521e58fc55d420002e11cf6c167/"
+ // );
   // @ts-ignore
   const resp = await connection._rpcRequest('getProgramAccounts', [
     programId.toBase58(),

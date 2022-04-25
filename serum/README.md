@@ -22,7 +22,7 @@ yarn add ../../web3.js @project-serum/serum
 ## Usage
 
 ```js
-import { Account, Connection, PublicKey } from '../../web3.js/src';
+import { Account, Connection, PublicKey } from '@solana/web3.js';
 import { Market } from '@project-serum/serum';
 
 let connection = new Connection('https://testnet.solana.com');
@@ -56,7 +56,7 @@ await market.placeOrder(connection, {
   side: 'buy', // 'buy' or 'sell'
   price: 123.45,
   size: 17.0,
-  orderType: 'limit', // 'limit', 'ioc', 'postOnly'
+  orderType: 'limit', // 'limit', 'limit', 'postOnly'
 });
 
 // Retrieving open orders by owner

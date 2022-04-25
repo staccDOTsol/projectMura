@@ -13,7 +13,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
   PublicKey,
-} from '../../web3.js/src';
+} from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from './token-instructions';
 import BN from 'bn.js';
 

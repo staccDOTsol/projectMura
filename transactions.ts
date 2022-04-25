@@ -10,7 +10,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
-} from './web3.js/src';
+} from '@solana/web3.js';
 import { getUnixTs, sleep } from './various';
 import { DEFAULT_TIMEOUT } from './constants';
 import log from 'loglevel';
@@ -33,7 +33,7 @@ export const sendTransactionWithRetryWithKeypair = async (
 
 
   transaction.recentBlockhash = (
-    block || (await connection.getRecentBlockhash(commitment))
+    block || (await connection.getLatestBlockhash(commitment))
   ).blockhash;
 
   if (includesFeePayer) {
@@ -103,7 +103,7 @@ export async function sendSignedTransaction({
       txid,
       timeout,
       connection,
-      'confirmed',
+      'recent',
       true,
     );
 
